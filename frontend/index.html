@@ -109,12 +109,32 @@
       max-height: 220px;
       overflow-y: auto;
     }
+    .inspecao-block {
+      background: #0a0e14;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem;
+    }
+    .inspecao-block + .inspecao-block,
+    .inspecao-block + pre {
+      margin-top: 1rem;
+    }
+    .inspecao-block .label,
     pre .label {
       display: block;
       color: var(--muted);
       margin-bottom: 0.5rem;
       font-family: "Segoe UI", sans-serif;
       font-size: 0.8rem;
+    }
+    pre.scrollable {
+      max-height: 320px;
+      overflow-y: auto;
+      overflow-x: auto;
+      margin: 0;
+      padding: 0;
+      border: none;
+      background: transparent;
     }
   </style>
 </head>
@@ -178,7 +198,10 @@
     <h2>Inspeção Visual — Texto vs Hexdump</h2>
     <div class="inspecao-grid">
       <div>
-        <pre id="previewJson"><span class="label">dados.json (primeiras linhas)</span></pre>
+        <div class="inspecao-block">
+          <span class="label">dados.json (conteúdo completo)</span>
+          <pre id="previewJson" class="scrollable"></pre>
+        </div>
         <pre id="previewCsv" style="margin-top:1rem"><span class="label">dados.csv (primeiras linhas)</span></pre>
       </div>
       <div>
@@ -316,8 +339,7 @@
         $("#secComparar").hidden = false;
 
         // Inspeção visual
-        $("#previewJson").innerHTML =
-          `<span class="label">dados.json (primeiras linhas)</span>${escapeHtml(inspecao.texto_json)}`;
+        $("#previewJson").textContent = inspecao.texto_json;
         $("#previewCsv").innerHTML =
           `<span class="label">dados.csv (primeiras linhas)</span>${escapeHtml(inspecao.texto_csv)}`;
         $("#hexPkl").innerHTML =

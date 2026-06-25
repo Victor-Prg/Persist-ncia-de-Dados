@@ -219,6 +219,14 @@ def preview_texto(formato: str, linhas: int = 8) -> str:
         return "".join(f.readline() for _ in range(linhas))
 
 
+def preview_texto_completo(formato: str) -> str:
+    path = PATHS[formato]
+    if not path.exists():
+        return "(arquivo ainda não existe)"
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
 def hexdump(caminho: Path, bytes_por_linha: int = 16, max_linhas: int = 8) -> str:
     if not caminho.exists():
         return "(arquivo ainda não existe)"

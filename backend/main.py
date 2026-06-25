@@ -16,6 +16,7 @@ from storage import (
     medir_carregar,
     medir_salvar,
     preview_texto,
+    preview_texto_completo,
     salvar_todos,
     tamanho_kb,
 )
@@ -135,7 +136,7 @@ def comparar():
             formatos[nome] = {"erro": str(exc)}
 
     inspecao = {
-        "texto_json": preview_texto("json"),
+        "texto_json": preview_texto_completo("json"),
         "texto_csv": preview_texto("csv"),
         "hexdump_pickle": hexdump(PKL_PATH),
         "hexdump_bin": hexdump(BIN_PATH),
