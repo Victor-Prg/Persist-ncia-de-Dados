@@ -24,6 +24,11 @@ CSV_FIELDS = ["id", "nome", "preco", "categoria"]
 DADOS_EXEMPLO = [
     {"id": 1, "nome": "Teclado Mecanico", "preco": 299.90, "categoria": "Perifericos"},
     {"id": 2, "nome": "Mouse Gamer", "preco": 150.00, "categoria": "Perifericos"},
+    {"id": 3, "nome": "Monitor Gamer 27", "preco": 1899.00, "categoria": "Perifericos"},
+    {"id": 4, "nome": "Headset USB 7.1", "preco": 349.90, "categoria": "Perifericos"},
+    {"id": 5, "nome": "SSD NVMe 1TB", "preco": 459.00, "categoria": "Armazenamento"},
+    {"id": 6, "nome": "Memoria RAM 16GB DDR4", "preco": 289.99, "categoria": "Partes"},
+    {"id": 7, "nome": "Webcam Full HD", "preco": 199.00, "categoria": "Perifericos"},
 ]
 
 

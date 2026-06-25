@@ -46,6 +46,18 @@ Cada produto possui a seguinte estrutura:
 }
 ```
 
+### Dataset de exemplo (7 produtos)
+
+| ID | Nome                  | Preço (R$) | Categoria      |
+|----|-----------------------|------------|----------------|
+| 1  | Teclado Mecanico      | 299,90     | Perifericos    |
+| 2  | Mouse Gamer           | 150,00     | Perifericos    |
+| 3  | Monitor Gamer 27      | 1.899,00   | Perifericos    |
+| 4  | Headset USB 7.1       | 349,90     | Perifericos    |
+| 5  | SSD NVMe 1TB          | 459,00     | Armazenamento  |
+| 6  | Memoria RAM 16GB DDR4 | 289,99     | Partes         |
+| 7  | Webcam Full HD        | 199,00     | Perifericos    |
+
 ### Layout Struct (`dados.bin`)
 
 Formato fixo por registro: **`I30sf20s`** (58 bytes)
