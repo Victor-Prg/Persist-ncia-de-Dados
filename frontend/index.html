@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App Ordenação/Busca — Persistência</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --border: #2d3a4f;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #22c55e;
+      --mono: "Cascadia Code", "Fira Code", Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .subtitle { color: var(--muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    button, select {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    button:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button.primary:hover { background: var(--accent-hover); }
+    .search-box {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.5rem 0.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+      font-size: 0.875rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+    }
+    th { background: var(--surface); color: var(--muted); font-weight: 600; }
+    tr:hover td { background: rgba(59, 130, 246, 0.06); }
+    .status {
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+    .status.ok { border-color: var(--success); color: var(--success); }
+    .status.err { border-color: #ef4444; color: #ef4444; }
+    section { margin-bottom: 2rem; }
+    section h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-table th { text-align: center; }
+    .compare-table td { text-align: center; }
+    .compare-table .best { color: var(--success); font-weight: 600; }
+    .inspecao-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 768px) {
+      .inspecao-grid { grid-template-columns: 1fr; }
+    }
+    pre {
+      background: #0a0e14;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      overflow-x: auto;
+      white-space: pre;
+      color: #a8b5c8;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    pre .label {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+      font-family: "Segoe UI", sans-serif;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Ordenação &amp; Busca de Produtos</h1>
+  <p class="subtitle">Integração com backend Python — Texto vs Binário</p>
+
+  <div id="status" class="status">Aguardando ação…</div>
+
+  <div class="toolbar">
+    <button class="primary" id="btnCarregarApi">Carregar da API</button>
+    <button id="btnSalvar">Salvar em Disco</button>
+    <button id="btnOffline">Carregar do Arquivo (Offline)</button>
+    <button id="btnComparar">Comparar Formatos</button>
+    <select id="formatoOffline" title="Formato offline">
+      <option value="json">JSON</option>
+      <option value="csv">CSV</option>
+      <option value="pickle">Pickle</option>
+      <option value="bin">Struct (.bin)</option>
+    </select>
+    <input type="search" id="busca" class="search-box" placeholder="Buscar por nome ou categoria…" />
+    <select id="ordenar">
+      <option value="">Sem ordenação</option>
+      <option value="nome">Nome (A→Z)</option>
+      <option value="preco">Preço (↑)</option>
+      <option value="categoria">Categoria</option>
+    </select>
+  </div>
+
+  <section>
+    <h2>Produtos</h2>
+    <table id="tabelaProdutos">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Preço (R$)</th>
+          <th>Categoria</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="secComparar" hidden>
+    <h2>Comparativo — Tamanho &amp; Tempo</h2>
+    <table class="compare-table" id="tabelaComparar">
+      <thead>
+        <tr>
+          <th>Formato</th>
+          <th>Tamanho (KB)</th>
+          <th>Salvar (ms)</th>
+          <th>Carregar (ms)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="secInspecao" hidden>
+    <h2>Inspeção Visual — Texto vs Hexdump</h2>
+    <div class="inspecao-grid">
+      <div>
+        <pre id="previewJson"><span class="label">dados.json (primeiras linhas)</span></pre>
+        <pre id="previewCsv" style="margin-top:1rem"><span class="label">dados.csv (primeiras linhas)</span></pre>
+      </div>
+      <div>
+        <pre id="hexPkl"><span class="label">dados.pkl (hexdump)</span></pre>
+        <pre id="hexBin" style="margin-top:1rem"><span class="label">dados.bin (hexdump)</span></pre>
+      </div>
+    </div>
+    <p style="margin-top:0.75rem;color:var(--muted);font-size:0.8rem" id="structLayout"></p>
+  </section>
+
+  <script>
+    // ── Configuração ──────────────────────────────────────────────────────
+    const API_BASE = "http://localhost:8000";
+
+    let produtos = [];
+
+    const $ = (sel) => document.querySelector(sel);
+    const statusEl = $("#status");
+    const tbody = $("#tabelaProdutos tbody");
+
+    function setStatus(msg, ok = true) {
+      statusEl.textContent = msg;
+      statusEl.className = "status " + (ok ? "ok" : "err");
+    }
+
+    // ── Renderização da tabela principal ──────────────────────────────────
+    function renderTabela(lista) {
+      const termo = $("#busca").value.toLowerCase();
+      const ordenar = $("#ordenar").value;
+
+      let filtrados = lista.filter((p) =>
+        p.nome.toLowerCase().includes(termo) ||
+        p.categoria.toLowerCase().includes(termo)
+      );
+
+      if (ordenar === "nome") filtrados.sort((a, b) => a.nome.localeCompare(b.nome));
+      else if (ordenar === "preco") filtrados.sort((a, b) => a.preco - b.preco);
+      else if (ordenar === "categoria") filtrados.sort((a, b) => a.categoria.localeCompare(b.categoria));
+
+      tbody.innerHTML = filtrados
+        .map(
+          (p) => `<tr>
+            <td>${p.id}</td>
+            <td>${p.nome}</td>
+            <td>${p.preco.toFixed(2)}</td>
+            <td>${p.categoria}</td>
+          </tr>`
+        )
+        .join("");
+    }
+
+  // ── GET /carregar ─────────────────────────────────────────────────────
+    async function carregarDaApi() {
+      try {
+        setStatus("Buscando dados da API…");
+        const res = await fetch(`${API_BASE}/carregar`);
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        produtos = data.produtos;
+        renderTabela(produtos);
+        setStatus(`Carregado da API (${produtos.length} produtos)`);
+      } catch (err) {
+        setStatus(`Erro ao carregar da API: ${err.message}`, false);
+      }
+    }
+
+    // ── POST /salvar ──────────────────────────────────────────────────────
+    async function salvarEmDisco() {
+      if (!produtos.length) {
+        setStatus("Carregue os dados antes de salvar.", false);
+        return;
+      }
+      try {
+        setStatus("Salvando nos 4 formatos…");
+        const res = await fetch(`${API_BASE}/salvar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ produtos }),
+        });
+        if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+        const data = await res.json();
+        setStatus(data.mensagem);
+      } catch (err) {
+        setStatus(`Erro ao salvar: ${err.message}`, false);
+      }
+    }
+
+    // ── GET /offline ──────────────────────────────────────────────────────
+    async function carregarOffline() {
+      const formato = $("#formatoOffline").value;
+      try {
+        setStatus(`Lendo arquivo offline (${formato})…`);
+        const res = await fetch(`${API_BASE}/offline?formato=${formato}`);
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || res.statusText);
+        }
+        const data = await res.json();
+        produtos = data.produtos;
+        renderTabela(produtos);
+        setStatus(`Modo offline: ${produtos.length} produtos de ${data.arquivo}`);
+      } catch (err) {
+        setStatus(`Offline indisponível: ${err.message}`, false);
+      }
+    }
+
+    // ── GET /comparar ─────────────────────────────────────────────────────
+    async function compararFormatos() {
+      try {
+        setStatus("Medindo formatos…");
+        const res = await fetch(`${API_BASE}/comparar`);
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+
+        const { comparacao, inspecao, resumo } = data;
+
+        // Tabela comparativa
+        const cmpBody = $("#tabelaComparar tbody");
+        const labels = { json: "JSON (texto)", csv: "CSV (texto)", pickle: "Pickle (bin)", bin: "Struct (bin)" };
+
+        cmpBody.innerHTML = Object.entries(comparacao)
+          .map(([fmt, m]) => {
+            const clsSalvar = fmt === resumo.mais_rapido_salvar ? "best" : "";
+            const clsCarregar = fmt === resumo.mais_rapido_carregar ? "best" : "";
+            const clsTamanho = fmt === resumo.menor_arquivo ? "best" : "";
+            return `<tr>
+              <td>${labels[fmt] || fmt}</td>
+              <td class="${clsTamanho}">${m.tamanho_kb}</td>
+              <td class="${clsSalvar}">${m.tempo_salvar_ms}</td>
+              <td class="${clsCarregar}">${m.tempo_carregar_ms}</td>
+            </tr>`;
+          })
+          .join("");
+
+        $("#secComparar").hidden = false;
+
+        // Inspeção visual
+        $("#previewJson").innerHTML =
+          `<span class="label">dados.json (primeiras linhas)</span>${escapeHtml(inspecao.texto_json)}`;
+        $("#previewCsv").innerHTML =
+          `<span class="label">dados.csv (primeiras linhas)</span>${escapeHtml(inspecao.texto_csv)}`;
+        $("#hexPkl").innerHTML =
+          `<span class="label">dados.pkl (hexdump)</span>${escapeHtml(inspecao.hexdump_pickle)}`;
+        $("#hexBin").innerHTML =
+          `<span class="label">dados.bin (hexdump)</span>${escapeHtml(inspecao.hexdump_bin)}`;
+        $("#structLayout").textContent = `Layout struct: ${inspecao.struct_layout}`;
+        $("#secInspecao").hidden = false;
+
+        setStatus("Comparativo gerado com sucesso.");
+      } catch (err) {
+        setStatus(`Erro no comparativo: ${err.message}`, false);
+      }
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    // ── Eventos ───────────────────────────────────────────────────────────
+    $("#btnCarregarApi").addEventListener("click", carregarDaApi);
+    $("#btnSalvar").addEventListener("click", salvarEmDisco);
+    $("#btnOffline").addEventListener("click", carregarOffline);
+    $("#btnComparar").addEventListener("click", compararFormatos);
+    $("#busca").addEventListener("input", () => renderTabela(produtos));
+    $("#ordenar").addEventListener("change", () => renderTabela(produtos));
+  </script>
+</body>
+</html>

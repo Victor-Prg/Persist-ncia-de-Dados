@@ -1,0 +1,9 @@
+{
+  "name": "persistencia-trabalho-final",
+  "private": true,
+  "scripts": {
+    "frontend": "npx --yes serve frontend -p 5173",
+    "api": "cd backend && python -m uvicorn main:app --reload --port 8000",
+    "dev": "echo Abra 2 terminais: pnpm frontend ^& pnpm api"
+  }
+}
