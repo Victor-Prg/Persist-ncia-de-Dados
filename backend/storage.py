@@ -4,6 +4,7 @@ Camada de persistência: JSON, CSV, Pickle e Struct (binário de tamanho fixo).
 
 import csv
 import json
+import os
 import pickle
 import struct
 import time
@@ -13,7 +14,14 @@ from pathlib import Path
 STRUCT_FORMAT = "I30sf20s"
 RECORD_SIZE = struct.calcsize(STRUCT_FORMAT)
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+
+def _resolve_data_dir() -> Path:
+    if os.environ.get("VERCEL"):
+        return Path("/tmp/data")
+    return Path(__file__).resolve().parent.parent / "data"
+
+
+DATA_DIR = _resolve_data_dir()
 JSON_PATH = DATA_DIR / "dados.json"
 CSV_PATH = DATA_DIR / "dados.csv"
 PKL_PATH = DATA_DIR / "dados.pkl"

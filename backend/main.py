@@ -2,24 +2,43 @@
 API de persistência — Trabalho Final (ordenação/busca com memória offline).
 """
 
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from storage import (
-    BIN_PATH,
-    DADOS_EXEMPLO,
-    LOADERS,
-    PATHS,
-    PKL_PATH,
-    hexdump,
-    medir_carregar,
-    medir_salvar,
-    preview_texto,
-    preview_texto_completo,
-    salvar_todos,
-    tamanho_kb,
-)
+try:
+    from .storage import (
+        BIN_PATH,
+        DADOS_EXEMPLO,
+        LOADERS,
+        PATHS,
+        PKL_PATH,
+        hexdump,
+        medir_carregar,
+        medir_salvar,
+        preview_texto,
+        preview_texto_completo,
+        salvar_todos,
+        tamanho_kb,
+    )
+except ImportError:
+    from storage import (
+        BIN_PATH,
+        DADOS_EXEMPLO,
+        LOADERS,
+        PATHS,
+        PKL_PATH,
+        hexdump,
+        medir_carregar,
+        medir_salvar,
+        preview_texto,
+        preview_texto_completo,
+        salvar_todos,
+        tamanho_kb,
+    )
 
 app = FastAPI(
     title="Persistência de Dados — Texto vs Binário",
@@ -114,7 +133,10 @@ def comparar():
     Compara tamanho (KB) e tempo de salvar/carregar dos 4 formatos.
     Inclui preview de texto (JSON/CSV) e hexdump dos binários (PKL/BIN).
     """
-    from storage import DADOS_EXEMPLO as produtos
+    try:
+        from .storage import DADOS_EXEMPLO as produtos
+    except ImportError:
+        from storage import DADOS_EXEMPLO as produtos
 
     # Garante que todos os arquivos existam para medição justa
     try:
@@ -161,3 +183,8 @@ def comparar():
             ),
         },
     }
+
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+if FRONTEND_DIR.exists():
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

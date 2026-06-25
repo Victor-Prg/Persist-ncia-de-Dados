@@ -214,7 +214,10 @@
 
   <script>
     // ── Configuração ──────────────────────────────────────────────────────
-    const API_BASE = "http://localhost:8000";
+    const API_BASE =
+      location.hostname === "localhost" && location.port === "5173"
+        ? "http://localhost:8000"
+        : "";
 
     let produtos = [];
 
